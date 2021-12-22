@@ -60,7 +60,7 @@ namespace PowerShellStart
             return exitCode;
         }
 
-        static async Task<int> GetFileAsync(string PSPfad, String Auftragsnummer)
+        static async Task<int> GetFileAsync(string PSPfad, string Auftragsnummer)
         {
             string PsName;
             PsName = "GetVaultFile.ps1";
@@ -86,7 +86,7 @@ namespace PowerShellStart
                 return 4;
             }
         }
-        static async Task<int> SetFileAsync(string PSPfad, String Auftragsnummer)
+        static async Task<int> SetFileAsync(string PSPfad, string Auftragsnummer)
         {
             string PsName;
             PsName = "SetVaultFile.ps1";
