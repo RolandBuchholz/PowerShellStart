@@ -2,7 +2,7 @@
   "profiles": {
     "PowerShellStart": {
       "commandName": "Project",
-      "commandLineArgs": "set 1000815"
+      "commandLineArgs": "get 1001042"
     }
   }
 }

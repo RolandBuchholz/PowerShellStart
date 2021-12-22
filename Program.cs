@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 
 namespace PowerShellStart
 {
@@ -8,13 +8,13 @@ namespace PowerShellStart
     {
         static int Main(string[] args)
         {
-            String starttyp;
+            string starttyp;
             starttyp = null;
 
-            String Auftragsnummer;
+            string Auftragsnummer;
             Auftragsnummer = null;
 
-            String PSPfad;
+            string PSPfad;
             PSPfad = @"C:\Work\Administration\PowerShellScripts\";
 
             //Befehlszeilenargumente auslesen 
@@ -23,8 +23,6 @@ namespace PowerShellStart
             //CommandLineArgs[0]: Immer der Dateipfad 
             if (CommandLineArgs.Length > 1)
             {
-                // Console.WriteLine(CommandLineArgs[1].ToString());
-                // Console.WriteLine(CommandLineArgs[2].ToString());
                 if (CommandLineArgs[1] == "get" | CommandLineArgs[1] == "set")
                 {
                     starttyp = CommandLineArgs[1];
@@ -36,40 +34,35 @@ namespace PowerShellStart
                 }
             }
 
-            //Warte 
-            //Console.ReadLine();
-
-            int exitCode=0;
+            Task<int> result;
+            int exitCode;
 
             switch (starttyp)
             {
                 case "get":
-                    exitCode=GetFile(PSPfad, Auftragsnummer);
+                    result = GetFileAsync(PSPfad, Auftragsnummer);
+                    exitCode = result.Result;
                     break;
                 case "set":
-                    exitCode=SetFile(PSPfad, Auftragsnummer);
+                    result = SetFileAsync(PSPfad, Auftragsnummer);
+                    exitCode = result.Result;
                     break;
                 default:
-                    exitCode=GetFile(PSPfad, Auftragsnummer);
+                    result = GetFileAsync(PSPfad, Auftragsnummer);
+                    exitCode = result.Result;
                     break;
             }
-
-            System.Threading.Thread.Sleep(1000);
             return exitCode;
-
         }
 
-        static int GetFile(string PSPfad,String Auftragsnummer)
+        static async Task<int> GetFileAsync(string PSPfad, String Auftragsnummer)
         {
-            String PsName;
+            string PsName;
             PsName = "GetVaultFile.ps1";
-
-            //Process.Start("PowerShell.exe", $"{PSPfad}{PsName} {Auftragsnummer}").WaitForExit();
 
             try
             {
-                Process getFile = new Process();
-
+                using Process getFile = new();
                 getFile.StartInfo.UseShellExecute = false;
                 getFile.StartInfo.FileName = "PowerShell.exe";
                 getFile.StartInfo.Arguments = $"{PSPfad}{PsName} {Auftragsnummer}";
@@ -78,27 +71,24 @@ namespace PowerShellStart
                 getFile.WaitForExit();
 
                 Console.WriteLine("GetVaultFile finished ......");
-
+                await Task.CompletedTask;
                 return getFile.ExitCode;
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
+                await Task.CompletedTask;
                 return 4;
             }
-            
         }
-        static int SetFile(string PSPfad, String Auftragsnummer)
+        static async Task<int> SetFileAsync(string PSPfad, String Auftragsnummer)
         {
-            String PsName;
+            string PsName;
             PsName = "SetVaultFile.ps1";
-
-            //Process.Start("PowerShell.exe", $"{PSPfad}{PsName} {Auftragsnummer}").WaitForExit();
 
             try
             {
-                Process setFile = new Process();
-
+                using Process setFile = new();
                 setFile.StartInfo.UseShellExecute = false;
                 setFile.StartInfo.FileName = "PowerShell.exe";
                 setFile.StartInfo.Arguments = $"{PSPfad}{PsName} {Auftragsnummer}";
@@ -107,12 +97,13 @@ namespace PowerShellStart
                 setFile.WaitForExit();
 
                 Console.WriteLine("SetVaultFile finished ......");
-
+                await Task.CompletedTask;
                 return setFile.ExitCode;
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
+                await Task.CompletedTask;
                 return 4;
             }
         }
