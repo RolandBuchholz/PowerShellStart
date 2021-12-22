@@ -37,6 +37,8 @@ namespace PowerShellStart
             Task<int> result;
             int exitCode;
 
+            var watch = Stopwatch.StartNew();
+
             switch (starttyp)
             {
                 case "get":
@@ -52,6 +54,9 @@ namespace PowerShellStart
                     exitCode = result.Result;
                     break;
             }
+            var stopTimeMs = watch.ElapsedMilliseconds;
+            
+            Console.WriteLine($"Downloadtime: {stopTimeMs} ms");
             return exitCode;
         }
 
