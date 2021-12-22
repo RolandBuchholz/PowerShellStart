@@ -8,29 +8,27 @@ namespace PowerShellStart
     {
         static int Main(string[] args)
         {
-            string starttyp;
-            starttyp = null;
+            string starttyp = string.Empty;
 
-            string Auftragsnummer;
-            Auftragsnummer = null;
+            string auftragsnummer = string.Empty;
 
-            string PSPfad;
-            PSPfad = @"C:\Work\Administration\PowerShellScripts\";
+            string pathPowershellScripts;
+            pathPowershellScripts = @"C:\Work\Administration\PowerShellScripts\";
 
             //Befehlszeilenargumente auslesen 
-            string[] CommandLineArgs = Environment.GetCommandLineArgs();
+            string[] commandLineArgs = Environment.GetCommandLineArgs();
 
             //CommandLineArgs[0]: Immer der Dateipfad 
-            if (CommandLineArgs.Length > 1)
+            if (commandLineArgs.Length > 1)
             {
-                if (CommandLineArgs[1] == "get" | CommandLineArgs[1] == "set")
+                if (commandLineArgs[1] == "get" | commandLineArgs[1] == "set")
                 {
-                    starttyp = CommandLineArgs[1];
-                    Auftragsnummer = CommandLineArgs[2];
+                    starttyp = commandLineArgs[1];
+                    auftragsnummer = commandLineArgs[2];
                 }
                 else
                 {
-                    Auftragsnummer = CommandLineArgs[1];
+                    auftragsnummer = commandLineArgs[1];
                 }
             }
 
@@ -42,15 +40,15 @@ namespace PowerShellStart
             switch (starttyp)
             {
                 case "get":
-                    result = GetFileAsync(PSPfad, Auftragsnummer);
+                    result = GetFileAsync(pathPowershellScripts, auftragsnummer);
                     exitCode = result.Result;
                     break;
                 case "set":
-                    result = SetFileAsync(PSPfad, Auftragsnummer);
+                    result = SetFileAsync(pathPowershellScripts, auftragsnummer);
                     exitCode = result.Result;
                     break;
                 default:
-                    result = GetFileAsync(PSPfad, Auftragsnummer);
+                    result = GetFileAsync(pathPowershellScripts, auftragsnummer);
                     exitCode = result.Result;
                     break;
             }
@@ -60,17 +58,17 @@ namespace PowerShellStart
             return exitCode;
         }
 
-        static async Task<int> GetFileAsync(string PSPfad, string Auftragsnummer)
+        static async Task<int> GetFileAsync(string pathPowershellScripts, string auftragsnummer)
         {
-            string PsName;
-            PsName = "GetVaultFile.ps1";
+            string powershellScriptName;
+            powershellScriptName = "GetVaultFile.ps1";
 
             try
             {
                 using Process getFile = new();
                 getFile.StartInfo.UseShellExecute = false;
                 getFile.StartInfo.FileName = "PowerShell.exe";
-                getFile.StartInfo.Arguments = $"{PSPfad}{PsName} {Auftragsnummer}";
+                getFile.StartInfo.Arguments = $"{pathPowershellScripts}{powershellScriptName} {auftragsnummer}";
                 getFile.StartInfo.CreateNoWindow = false;
                 getFile.Start();
                 getFile.WaitForExit();
@@ -86,17 +84,17 @@ namespace PowerShellStart
                 return 4;
             }
         }
-        static async Task<int> SetFileAsync(string PSPfad, string Auftragsnummer)
+        static async Task<int> SetFileAsync(string pathPowershellScripts, string auftragsnummer)
         {
-            string PsName;
-            PsName = "SetVaultFile.ps1";
+            string powershellScriptName;
+            powershellScriptName = "SetVaultFile.ps1";
 
             try
             {
                 using Process setFile = new();
                 setFile.StartInfo.UseShellExecute = false;
                 setFile.StartInfo.FileName = "PowerShell.exe";
-                setFile.StartInfo.Arguments = $"{PSPfad}{PsName} {Auftragsnummer}";
+                setFile.StartInfo.Arguments = $"{pathPowershellScripts}{powershellScriptName} {auftragsnummer}";
                 setFile.StartInfo.CreateNoWindow = false;
                 setFile.Start();
                 setFile.WaitForExit();
