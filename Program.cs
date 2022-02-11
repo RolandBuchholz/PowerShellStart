@@ -10,15 +10,16 @@ namespace PowerShellStart
 
         static DownloadInfo downloadInfo = new();
 
-        //static DownloadInfo Main(string[] args)
+        public static int ExitCode { get; private set; }
+
         static int Main(string[] args)
         {
             string starttyp = string.Empty;
             string auftragsnummer = string.Empty;
             bool readOnly = false;
             string pathPowershellScripts;
-            //pathPowershellScripts = @"C:\Work\Administration\PowerShellScripts\";
-            pathPowershellScripts = @"C:\Users\Buchholz.PPS\source\BE\PS_Scripts\BE_PS_Scripts\PS_Scripts\";
+            pathPowershellScripts = @"C:\Work\Administration\PowerShellScripts\";
+            //pathPowershellScripts = @"C:\Users\Buchholz.PPS\source\BE\PS_Scripts\BE_PS_Scripts\PS_Scripts\";
 
             //Befehlszeilenargumente auslesen 
             string[] commandLineArgs = Environment.GetCommandLineArgs();
@@ -47,23 +48,27 @@ namespace PowerShellStart
             {
                 case "get":
                     result = GetFileAsync(pathPowershellScripts, auftragsnummer, readOnly);
-                    downloadInfo.ExitCode = result.Result;
+                    ExitCode = result.Result;
                     break;
                 case "set":
                     result = SetFileAsync(pathPowershellScripts, auftragsnummer);
-                    downloadInfo.ExitCode = result.Result;
+                    ExitCode = result.Result;
                     break;
                 default:
                     result = GetFileAsync(pathPowershellScripts, auftragsnummer, readOnly);
-                    downloadInfo.ExitCode = result.Result;
+                    ExitCode = result.Result;
                     break;
             }
+            downloadInfo.ExitCode = ExitCode;
             long stopTimeMs = watch.ElapsedMilliseconds;
-
+            Console.WriteLine("---DownloadInfo---");
+            //JsonSerializerOptions jso = new JsonSerializerOptions();
+            //jso.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
+            Console.WriteLine(JsonSerializer.Serialize<DownloadInfo>(downloadInfo));
+            Console.WriteLine("---DownloadInfo---");
             Console.WriteLine($"Downloadtime: {stopTimeMs} ms");
 
-            return downloadInfo.ExitCode;
-            //return downloadInfo;  // <===== Wenn Object in Excel nicht möglich Json-String
+            return ExitCode;
         }
 
         static async Task<int> GetFileAsync(string pathPowershellScripts, string auftragsnummer, bool readOnly)
@@ -83,11 +88,19 @@ namespace PowerShellStart
                 getFile.Start();
                 getFile.WaitForExit();
                 string downloadResult = await getFile.StandardOutput.ReadToEndAsync();
-                if (!String.IsNullOrWhiteSpace(downloadResult))
+                if (!string.IsNullOrWhiteSpace(downloadResult))
                 {
-                    downloadInfo = JsonSerializer.Deserialize<DownloadInfo>(downloadResult);
+                    try
+                    {
+                        downloadInfo = JsonSerializer.Deserialize<DownloadInfo>(downloadResult.Split("---DownloadInfo---")[1]);
+                    }
+                    catch 
+                    {
+                        Console.WriteLine("Keine DownloadInfo gefunden");
+                    }
                 }
-                Console.WriteLine("GetVaultFile finished ......");
+                
+                Console.WriteLine("GetVaultFile finished ...");
                 await Task.CompletedTask;
                 return getFile.ExitCode;
             }
