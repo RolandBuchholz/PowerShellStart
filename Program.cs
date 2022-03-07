@@ -26,7 +26,7 @@ namespace PowerShellStart
             //CommandLineArgs[0]: Immer der Dateipfad 
             if (commandLineArgs.Length > 1)
             {
-                if (commandLineArgs[1] == "get" | commandLineArgs[1] == "set")
+                if (commandLineArgs[1] == "get" | commandLineArgs[1] == "set" | commandLineArgs[1] == "undo")
                 {
                     starttyp = commandLineArgs[1];
                     auftragsnummer = commandLineArgs[2];
@@ -54,6 +54,10 @@ namespace PowerShellStart
                     result = SetFileAsync(pathPowershellScripts, auftragsnummer);
                     ExitCode = result.Result;
                     break;
+                case "undo":
+                    result = UndoFileAsync(pathPowershellScripts, auftragsnummer);
+                    ExitCode = result.Result;
+                    break;
                 default:
                     result = GetFileAsync(pathPowershellScripts, auftragsnummer, readOnly);
                     ExitCode = result.Result;
@@ -74,7 +78,6 @@ namespace PowerShellStart
         static async Task<int> GetFileAsync(string pathPowershellScripts, string auftragsnummer, bool readOnly)
         {
             string powershellScriptName = "GetVaultFile.ps1";
-            //string powershellScriptName = "ReturnObjectTest.ps1";
             string readOnlyPowershell = readOnly ? "$true" : "$false";
 
             try
@@ -117,16 +120,68 @@ namespace PowerShellStart
 
             try
             {
-                using Process setFile = new();
-                setFile.StartInfo.UseShellExecute = false;
-                setFile.StartInfo.FileName = "PowerShell.exe";
-                setFile.StartInfo.Arguments = $"{pathPowershellScripts}{powershellScriptName} {auftragsnummer}";
-                setFile.StartInfo.CreateNoWindow = false;
-                setFile.Start();
-                setFile.WaitForExit();
-                Console.WriteLine("SetVaultFile finished ......");
+                using Process getFile = new();
+                getFile.StartInfo.UseShellExecute = false;
+                getFile.StartInfo.FileName = "PowerShell.exe";
+                getFile.StartInfo.Arguments = $"{pathPowershellScripts}{powershellScriptName} {auftragsnummer}";
+                getFile.StartInfo.CreateNoWindow = false;
+                getFile.StartInfo.RedirectStandardOutput = true;
+                getFile.Start();
+                getFile.WaitForExit();
+                string downloadResult = await getFile.StandardOutput.ReadToEndAsync();
+                if (!string.IsNullOrWhiteSpace(downloadResult))
+                {
+                    try
+                    {
+                        downloadInfo = JsonSerializer.Deserialize<DownloadInfo>(downloadResult.Split("---DownloadInfo---")[1]);
+                    }
+                    catch
+                    {
+                        Console.WriteLine("Keine DownloadInfo gefunden");
+                    }
+                }
+
+                Console.WriteLine("GetVaultFile finished ...");
                 await Task.CompletedTask;
-                return setFile.ExitCode;
+                return getFile.ExitCode;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                await Task.CompletedTask;
+                return 4;
+            }
+        }
+        static async Task<int> UndoFileAsync(string pathPowershellScripts, string auftragsnummer)
+        {
+            string powershellScriptName = "UndoVaultFile.ps1";
+
+            try
+            {
+                using Process getFile = new();
+                getFile.StartInfo.UseShellExecute = false;
+                getFile.StartInfo.FileName = "PowerShell.exe";
+                getFile.StartInfo.Arguments = $"{pathPowershellScripts}{powershellScriptName} {auftragsnummer}";
+                getFile.StartInfo.CreateNoWindow = false;
+                getFile.StartInfo.RedirectStandardOutput = true;
+                getFile.Start();
+                getFile.WaitForExit();
+                string downloadResult = await getFile.StandardOutput.ReadToEndAsync();
+                if (!string.IsNullOrWhiteSpace(downloadResult))
+                {
+                    try
+                    {
+                        downloadInfo = JsonSerializer.Deserialize<DownloadInfo>(downloadResult.Split("---DownloadInfo---")[1]);
+                    }
+                    catch
+                    {
+                        Console.WriteLine("Keine DownloadInfo gefunden");
+                    }
+                }
+
+                Console.WriteLine("GetVaultFile finished ...");
+                await Task.CompletedTask;
+                return getFile.ExitCode;
             }
             catch (Exception e)
             {
