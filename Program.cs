@@ -17,8 +17,7 @@ namespace PowerShellStart
             string starttyp = string.Empty;
             string auftragsnummer = string.Empty;
             bool readOnly = false;
-            string pathPowershellScripts;
-            pathPowershellScripts = @"C:\Work\Administration\PowerShellScripts\";
+            const string pathPowershellScripts = @"C:\Work\Administration\PowerShellScripts\";
 
             //Befehlszeilenargumente auslesen 
             string[] commandLineArgs = Environment.GetCommandLineArgs();
@@ -89,11 +88,12 @@ namespace PowerShellStart
                 {
                     psScript.StartInfo.Arguments = $"{pathPowershellScripts}{powershellScriptName} {auftragsnummer}";
                 }
-                psScript.StartInfo.CreateNoWindow = false;
+                psScript.StartInfo.CreateNoWindow = true;
                 psScript.StartInfo.RedirectStandardOutput = true;
                 psScript.Start();
-                psScript.WaitForExit();
                 string downloadResult = await psScript.StandardOutput.ReadToEndAsync();
+                psScript.WaitForExit();
+                
                 if (!string.IsNullOrWhiteSpace(downloadResult))
                 {
                     try
