@@ -14,66 +14,91 @@ namespace PowerShellStart
 
         static int Main(string[] args)
         {
-            string starttyp = string.Empty;
-            string auftragsnummer = string.Empty;
+            string starttyp;
+            string auftragsnummer;
             bool readOnly = false;
+            bool customFile = false;
             const string pathPowershellScripts = @"C:\Work\Administration\PowerShellScripts\";
 
             //Befehlszeilenargumente auslesen 
             string[] commandLineArgs = Environment.GetCommandLineArgs();
+
             //CommandLineArgs[0]: Immer der Dateipfad 
-            if (commandLineArgs.Length > 1)
+            if (commandLineArgs.Length > 2)
             {
-                if (commandLineArgs[1] == "get" | commandLineArgs[1] == "set" | commandLineArgs[1] == "undo")
+                starttyp = commandLineArgs[1].ToLower();
+                switch (starttyp)
                 {
-                    starttyp = commandLineArgs[1];
-                    auftragsnummer = commandLineArgs[2];
-                    if (commandLineArgs.Length >= 4)
-                    {
-                        readOnly = Convert.ToBoolean(commandLineArgs[3]);
-                    }
+                    case "get":
+                        if (commandLineArgs.Length == 3)
+                        {
+                            auftragsnummer = commandLineArgs[2];
+                        }
+                        else if ((commandLineArgs.Length == 4))
+                        {
+                            auftragsnummer = commandLineArgs[2];
+                            readOnly = Convert.ToBoolean(commandLineArgs[3]);
+                        }
+                        else
+                        {
+                            auftragsnummer = commandLineArgs[2];
+                            readOnly = Convert.ToBoolean(commandLineArgs[3]);
+                            customFile = Convert.ToBoolean(commandLineArgs[4]);
+                        }
+                        break;
+                    case "set" or "undo":
+                        if (commandLineArgs.Length == 3)
+                        {
+                            auftragsnummer = commandLineArgs[2];
+                        }
+                        else
+                        {
+                            auftragsnummer = commandLineArgs[2];
+                            customFile = Convert.ToBoolean(commandLineArgs[3]);
+                        }
+                        break;
+                    default:
+                        return 0;
+                }
+            }
+            else
+            {
+                if (commandLineArgs.Length == 2)
+                {
+                    starttyp = "get";
+                    auftragsnummer = commandLineArgs[1];
                 }
                 else
                 {
-                    auftragsnummer = commandLineArgs[1];
+                    return 0;
                 }
             }
 
             Stopwatch watch = Stopwatch.StartNew();
-            Task<int> result = StartPowershellScript(pathPowershellScripts, starttyp, auftragsnummer, readOnly);
+            Task<int> result = StartPowershellScript(pathPowershellScripts, starttyp, auftragsnummer, readOnly, customFile);
             ExitCode = result.Result;
 
             downloadInfo.ExitCode = ExitCode;
             long stopTimeMs = watch.ElapsedMilliseconds;
             Console.WriteLine("---DownloadInfo---");
-            Console.WriteLine(JsonSerializer.Serialize<DownloadInfo>(downloadInfo));
+            Console.WriteLine(JsonSerializer.Serialize(downloadInfo));
             Console.WriteLine("---DownloadInfo---");
             Console.WriteLine($"Downloadtime: {stopTimeMs} ms");
 
             return ExitCode;
         }
 
-        static async Task<int> StartPowershellScript(string pathPowershellScripts, string starttyp, string auftragsnummer, bool readOnly)
+        static async Task<int> StartPowershellScript(string pathPowershellScripts, string starttyp, string auftragsnummer, bool readOnly, bool customFile)
         {
-            string powershellScriptName;
-
-            switch (starttyp)
+            string powershellScriptName = starttyp switch
             {
-                case "get":
-                    powershellScriptName = "GetVaultFile.ps1";
-                    break;
-                case "set":
-                    powershellScriptName = "SetVaultFile.ps1";
-                    break;
-                case "undo":
-                    powershellScriptName = "UndoVaultFile.ps1";
-                    break;
-                default:
-                    powershellScriptName = "GetVaultFile.ps1";
-                    break;
-            }
-
+                "get" => "GetVaultFile.ps1",
+                "set" => "SetVaultFile.ps1",
+                "undo" => "UndoVaultFile.ps1",
+                _ => "GetVaultFile.ps1",
+            };
             string readOnlyPowershell = readOnly ? "$true" : "$false";
+            string customFilePowershell = customFile ? "$true" : "$false";
 
             try
             {
@@ -82,11 +107,11 @@ namespace PowerShellStart
                 psScript.StartInfo.FileName = "PowerShell.exe";
                 if (starttyp == "get")
                 {
-                    psScript.StartInfo.Arguments = $"{pathPowershellScripts}{powershellScriptName} {auftragsnummer} {readOnlyPowershell}";
+                    psScript.StartInfo.Arguments = $"{pathPowershellScripts}{powershellScriptName} {auftragsnummer} {readOnlyPowershell} {customFilePowershell}";
                 }
                 else
                 {
-                    psScript.StartInfo.Arguments = $"{pathPowershellScripts}{powershellScriptName} {auftragsnummer}";
+                    psScript.StartInfo.Arguments = $"{pathPowershellScripts}{powershellScriptName} {auftragsnummer} {customFilePowershell}";
                 }
                 psScript.StartInfo.CreateNoWindow = true;
                 psScript.StartInfo.RedirectStandardOutput = true;
